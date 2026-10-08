@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>즐거운 일상 퀘스트</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+}
+
+.phone {
+    width: min(96vw, 960px);
+    aspect-ratio: 16 / 9;
+    height: auto;
+    background: #dff7c8;
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    box-shadow: 0 14px 40px rgba(0,0,0,.28);
+}
+
+/* 시작 화면 */
+
+#startScreen {
+    height: 100%;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(#bff3ff, #e7ffd8 45%, #fff3be);
+}
+
+.start-title {
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 1.25;
+    margin-bottom: 18px;
+}
+
+.start-monster {
+    width: 135px;
+    height: 135px;
+    object-fit: cover;
+    margin: 0 auto 20px;
+    display: block;
+    border-radius: 24px;
+    border: 4px solid #222;
+    box-shadow: 0 8px 0 rgba(0,0,0,.18);
+}
+
+.start-text {
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    color: #444;
+    font-weight: 800;
+}
+
+.main-button {
+    border: 0;
+    border-radius: 18px;
+    background: #2f9e44;
+    color: white;
+    font-size: 21px;
+    font-weight: 900;
+    padding: 15px 22px;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #1f6f30;
+    width: 240px;
+    margin: 0 auto;
+}
+
+.main-button:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #1f6f30;
+}
+
+/* 맵 화면 */
+
+#mapScreen {
+    display: none;
+    height: 100%;
+    position: relative;
+    background: #111;
+    overflow: hidden;
+}
+
+.map {
+    position: absolute;
+    inset: 0;
+    background-image: url("map3.png?v=digist1");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+/* 안내문 */
+
+.top-ui {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    z-index: 8;
+    background: rgba(255,255,255,.92);
+    border: 3px solid #333;
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.45;
+}
+
+/* 맵 위 펭유니 */
+
+.player {
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    z-index: 7;
+    transition: left .18s linear, top .18s linear;
+}
+
+.player img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 14px;
+    border: 3px solid #222;
+    filter: drop-shadow(0 4px 0 rgba(0,0,0,.25));
+}
+
+.player.walk {
+    animation: walk .25s alternate infinite;
+}
+
+@keyframes walk {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-4px);
+    }
+}
+
+/* 방향키 */
+
+.controls {
+    position: absolute;
+    bottom: 18px;
+    left: 18px;
+    z-index: 9;
+    display: grid;
+    grid-template-columns: 52px 52px 52px;
+    grid-template-rows: 52px 52px 52px;
+    gap: 6px;
+}
+
+.ctrl {
+    border: 3px solid #333;
+    background: rgba(255,255,255,.92);
+    border-radius: 14px;
+    font-size: 23px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.ctrl:active {
+    background: #ffe066;
+}
+
+.up {
+    grid-column: 2;
+}
+
+.left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.down {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+.hint {
+    position: absolute;
+    right: 18px;
+    bottom: 22px;
+    z-index: 9;
+    width: 170px;
+    background: rgba(255,255,255,.92);
+    border: 3px solid #333;
+    border-radius: 16px;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.45;
+}
+
+/* 배틀 화면 */
+
+#battleScreen {
+    display: none;
+    height: 100%;
+    background: #222;
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+}
+
+.battle-stage {
+    position: relative;
+    width: 100%;
+    height: calc(100% - 170px);
+    background:
+        linear-gradient(
+            to bottom,
+            #5a8cff 0%,
+            #64c7ff 35%,
+            #f3c37c 36%,
+            #f3c37c 100%
+        );
+    border-bottom: 4px solid #222;
+    overflow: hidden;
+}
+
+.battle-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            rgba(255,255,255,.18) 0px,
+            rgba(255,255,255,.18) 3px,
+            transparent 3px,
+            transparent 9px
+        );
+    opacity: .25;
+}
+
+/* 상태창 */
+
+.enemy-status {
+    position: absolute;
+    left: 18px;
+    top: 24px;
+    width: 210px;
+    background: #f8f8f8;
+    border: 4px solid #222;
+    border-radius: 8px 8px 8px 2px;
+    padding: 8px 10px;
+    z-index: 5;
+}
+
+.status-name {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    font-weight: 900;
+    margin-bottom: 5px;
+}
+
+.hp-bar {
+    width: 100%;
+    height: 10px;
+    background: #ddd;
+    border: 2px solid #222;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.hp-fill {
+    height: 100%;
+    width: 100%;
+    background: #3abf4a;
+}
+
+/* 야생 기니 */
+
+.enemy-platform {
+    position: absolute;
+    right: 105px;
+    top: 210px;
+    width: 210px;
+    height: 62px;
+    background: #d8b07b;
+    border-radius: 50%;
+    border: 4px solid #8f6a45;
+    z-index: 1;
+}
+
+.enemy-monster {
+    position: absolute;
+    right: 130px;
+    top: 70px;
+    width: 160px;
+    height: 190px;
+    object-fit: cover;
+    border-radius: 20px;
+    border: 3px solid #222;
+    z-index: 3;
+    filter: drop-shadow(0 8px 0 rgba(0,0,0,.18));
+}
+
+/* 내 캐릭터 펭유니 */
+
+.player-platform {
+    position: absolute;
+    left: 100px;
+    bottom: 38px;
+    width: 220px;
+    height: 66px;
+    background: #d8b07b;
+    border-radius: 50%;
+    border: 4px solid #8f6a45;
+    z-index: 1;
+}
+
+.player-monster-wrap {
+    position: absolute;
+    left: 132px;
+    bottom: 72px;
+    width: 135px;
+    height: 135px;
+    z-index: 3;
+}
+
+.player-monster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 18px;
+    border: 3px solid #222;
+    filter: drop-shadow(0 8px 0 rgba(0,0,0,.18));
+}
+
+.player-status {
+    position: absolute;
+    right: 20px;
+    bottom: 42px;
+    width: 210px;
+    background: #f8f8f8;
+    border: 4px solid #222;
+    border-radius: 8px 8px 2px 8px;
+    padding: 8px 10px;
+    z-index: 5;
+}
+
+.hp-number {
+    margin-top: 4px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+/* 몬스터볼 */
+
+.pokeball {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    left: 220px;
+    bottom: 135px;
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    object-fit: contain;
+}
+
+.pokeball.throw {
+    opacity: 1;
+    animation: throwBall 1s ease-in-out forwards;
+}
+
+@keyframes throwBall {
+    0% {
+        transform: translate(0, 0) scale(0.8) rotate(0deg);
+    }
+
+    20% {
+        transform: translate(90px, -50px) scale(0.82) rotate(120deg);
+    }
+
+    45% {
+        transform: translate(210px, -125px) scale(0.78) rotate(260deg);
+    }
+
+    70% {
+        transform: translate(340px, -160px) scale(0.72) rotate(420deg);
+    }
+
+    100% {
+        transform: translate(455px, -145px) scale(0.62) rotate(720deg);
+    }
+}
+
+.enemy-monster.hit {
+    animation: enemyHit 0.35s ease 2;
+}
+
+@keyframes enemyHit {
+    0% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-8px);
+    }
+
+    50% {
+        transform: translateX(8px);
+    }
+
+    75% {
+        transform: translateX(-6px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* 배틀 하단 */
+
+.battle-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 170px;
+    background: #f1f1f1;
+    border-top: 5px solid #222;
+    display: flex;
+    flex-direction: column;
+}
+
+.battle-message {
+    margin: 10px 12px;
+    padding: 13px 16px;
+    min-height: 76px;
+    background: white;
+    border: 4px solid #222;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1.45;
+}
+
+.command-area {
+    margin: 0 12px 12px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.catch-button {
+    width: 100%;
+    height: 54px;
+    border: 4px solid #222;
+    border-radius: 8px;
+    background: #fff;
+    color: #111;
+    font-size: 22px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: inset -4px -4px 0 rgba(0,0,0,.12);
+}
+
+.catch-button:active {
+    transform: translateY(2px);
+    background: #ffe066;
+}
+
+/* 엔딩 화면 */
+
+#endingScreen {
+    display: none;
+    height: 100%;
+    padding: 34px 24px;
+    text-align: center;
+    background:
+        radial-gradient(circle at top, #fff1a8, #ffc9de 45%, #bde0fe);
+}
+
+.ending-card {
+    background: rgba(255,255,255,.92);
+    border: 4px solid #333;
+    border-radius: 28px;
+    padding: 22px 18px;
+    margin: 0 auto;
+    max-width: 560px;
+}
+
+.ending-title {
+    font-size: 38px;
+    font-weight: 900;
+    line-height: 1.25;
+    margin: 12px 0;
+}
+
+.ending-sub {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.5;
+}
+
+.ending-imgs {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    align-items: center;
+    margin-top: 18px;
+}
+
+.ending-imgs img {
+    width: 112px;
+    height: 112px;
+    object-fit: cover;
+    border-radius: 20px;
+    border: 3px solid #222;
+}
+</style>
+</head>
+
+<body>
+
+<div class="phone">
+
+    <!-- 시작 화면 -->
+    <section id="startScreen">
+        <div class="start-title">
+            즐거운<br>
+            일상 퀘스트
+        </div>
+
+        <img
+            src="pengyuni.png?v=digist1"
+            class="start-monster"
+            alt="펭유니"
+        >
+
+        <div class="start-text">
+            펭유니와 함께 디지스트 도로를 걸어가면<br>
+            특별한 야생 기니를 만날 수 있을지도?
+        </div>
+
+        <button class="main-button" id="startButton">
+            퀘스트 시작
+        </button>
+    </section>
+
+
+    <!-- 맵 화면 -->
+    <section id="mapScreen">
+
+        <div class="map" id="map">
+
+            <div class="top-ui">
+                디지스트 도로를 따라서 걸어가세요.<br>
+                길 끝에 가면 야생 기니가 나타납니다.
+            </div>
+
+            <div class="player" id="player">
+                <img src="pengyuni.png?v=digist1" alt="펭유니">
+            </div>
+
+        </div>
+
+        <div class="controls">
+            <button class="ctrl up" data-dir="up">▲</button>
+            <button class="ctrl left" data-dir="left">◀</button>
+            <button class="ctrl right" data-dir="right">▶</button>
+            <button class="ctrl down" data-dir="down">▼</button>
+        </div>
+
+        <div class="hint">
+            방향키 또는 화살표 키로<br>
+            디지스트 도로를 따라 이동
+        </div>
+
+    </section>
+
+
+    <!-- 배틀 화면 -->
+    <section id="battleScreen">
+
+        <div class="battle-stage">
+
+            <div class="enemy-status">
+                <div class="status-name">
+                    <span>야생 기니</span>
+                    <span>Lv.24</span>
+                </div>
+
+                <div class="hp-bar">
+                    <div class="hp-fill"></div>
+                </div>
+            </div>
+
+            <div class="enemy-platform"></div>
+
+            <img
+                src="gini.png?v=digist1"
+                class="enemy-monster"
+                alt="야생 기니"
+            >
+
+            <div class="player-platform"></div>
+
+            <div class="player-monster-wrap">
+                <img
+                    src="pengyuni.png?v=digist1"
+                    class="player-monster"
+                    alt="펭유니"
+                >
+            </div>
+
+            <div class="player-status">
+                <div class="status-name">
+                    <span>펭유니</span>
+                    <span>Lv.25</span>
+                </div>
+
+                <div class="hp-bar">
+                    <div class="hp-fill"></div>
+                </div>
+
+                <div class="hp-number">
+                    91 / 91
+                </div>
+            </div>
+
+            <img
+                src="ball.png?v=digist1"
+                id="pokeball"
+                class="pokeball"
+                alt="몬스터볼"
+            >
+
+        </div>
+
+        <div class="battle-bottom">
+
+            <div class="battle-message" id="battleText">
+                야생 기니가 나타났다!<br>
+                펭유니는 가만히 바라보고 있다.
+            </div>
+
+            <div class="command-area">
+                <button class="catch-button" id="catchButton">
+                    뽀뽀한다
+                </button>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- 엔딩 화면 -->
+    <section id="endingScreen">
+
+        <div class="ending-card">
+
+            <div style="font-size:56px;">
+                🌈
+            </div>
+
+            <div class="ending-title">
+                즐거운<br>
+                일상 퀘스트 완료!
+            </div>
+
+            <div class="ending-sub">
+                야생 기니와 친해졌다!<br>
+                펭유니와 함께 오늘도 쭌내 즐거운 하루가 되었지?
+            </div>
+
+            <div class="ending-imgs">
+                <img src="gini.png?v=digist1" alt="기니">
+                <img src="pengyuni.png?v=digist1" alt="펭유니">
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script>
+const startScreen = document.getElementById("startScreen");
+const mapScreen = document.getElementById("mapScreen");
+const battleScreen = document.getElementById("battleScreen");
+const endingScreen = document.getElementById("endingScreen");
+
+const startButton = document.getElementById("startButton");
+const catchButton = document.getElementById("catchButton");
+const player = document.getElementById("player");
+const map = document.getElementById("map");
+const pokeball = document.getElementById("pokeball");
+const enemyMonster = document.querySelector(".enemy-monster");
+
+let x = 0;
+let y = 0;
+let encountered = false;
+
+function showScreen(screen) {
+    startScreen.style.display = "none";
+    mapScreen.style.display = "none";
+    battleScreen.style.display = "none";
+    endingScreen.style.display = "none";
+
+    screen.style.display = "block";
+}
+
+function setInitialPlayerPosition() {
+    const mapWidth = map.clientWidth;
+    const mapHeight = map.clientHeight;
+
+    x = mapWidth * 0.58;
+    y = mapHeight * 0.68;
+
+    updatePlayer();
+}
+
+function updatePlayer() {
+    player.style.left = x + "px";
+    player.style.top = y + "px";
+
+    player.classList.add("walk");
+
+    setTimeout(function() {
+        player.classList.remove("walk");
+    }, 220);
+
+    checkEncounter();
+}
+
+function movePlayer(dir) {
+    const mapWidth = map.clientWidth;
+    const mapHeight = map.clientHeight;
+    const playerWidth = player.offsetWidth;
+    const playerHeight = player.offsetHeight;
+
+    const step = Math.max(18, mapWidth * 0.035);
+
+    if (dir === "up") {
+        y -= step;
+    }
+
+    if (dir === "down") {
+        y += step;
+    }
+
+    if (dir === "left") {
+        x -= step;
+    }
+
+    if (dir === "right") {
+        x += step;
+    }
+
+    const minX = mapWidth * 0.5;
+    const maxX = mapWidth - playerWidth - 22;
+
+    const minY = mapHeight * 0.18;
+    const maxY = mapHeight - playerHeight - 26;
+
+    if (x < minX) x = minX;
+    if (x > maxX) x = maxX;
+    if (y < minY) y = minY;
+    if (y > maxY) y = maxY;
+
+    updatePlayer();
+}
+
+function checkEncounter() {
+    if (encountered) return;
+
+    const mapWidth = map.clientWidth;
+
+    if (x >= mapWidth * 0.84) {
+        encountered = true;
+
+        setTimeout(function() {
+            showScreen(battleScreen);
+        }, 450);
+    }
+}
+
+startButton.addEventListener("click", function() {
+    showScreen(mapScreen);
+    setInitialPlayerPosition();
+});
+
+document.querySelectorAll(".ctrl").forEach(function(button) {
+    button.addEventListener("click", function() {
+        movePlayer(button.dataset.dir);
+    });
+});
+
+document.addEventListener("keydown", function(e) {
+    if (mapScreen.style.display !== "block") return;
+
+    if (
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight"
+    ) {
+        e.preventDefault();
+    }
+
+    if (e.key === "ArrowUp") movePlayer("up");
+    if (e.key === "ArrowDown") movePlayer("down");
+    if (e.key === "ArrowLeft") movePlayer("left");
+    if (e.key === "ArrowRight") movePlayer("right");
+});
+
+window.addEventListener("resize", function() {
+    if (mapScreen.style.display !== "block") return;
+
+    const mapWidth = map.clientWidth;
+    const mapHeight = map.clientHeight;
+    const playerWidth = player.offsetWidth;
+    const playerHeight = player.offsetHeight;
+
+    if (x < mapWidth * 0.5) x = mapWidth * 0.5;
+    if (x > mapWidth - playerWidth - 22) x = mapWidth - playerWidth - 22;
+    if (y < mapHeight * 0.18) y = mapHeight * 0.18;
+    if (y > mapHeight - playerHeight - 26) y = mapHeight - playerHeight - 26;
+
+    player.style.left = x + "px";
+    player.style.top = y + "px";
+});
+
+catchButton.addEventListener("click", function() {
+    catchButton.disabled = true;
+    catchButton.innerText = "뽀뽀 중...";
+
+    const battleText = document.getElementById("battleText");
+
+    battleText.innerHTML = "펭유니가 야생 기니에게 뽀뽀했다!";
+
+    pokeball.classList.remove("throw");
+    enemyMonster.classList.remove("hit");
+
+    void pokeball.offsetWidth;
+
+    pokeball.classList.add("throw");
+
+    setTimeout(function() {
+        enemyMonster.classList.add("hit");
+        battleText.innerHTML = "야생 기니가 당황하는 중이다...";
+    }, 950);
+
+    setTimeout(function() {
+        battleText.innerHTML = "신난다! 야생 기니와 친해졌다!";
+    }, 1550);
+
+    setTimeout(function() {
+        showScreen(endingScreen);
+    }, 2300);
+});
+</script>
+
+</body>
+</html>
